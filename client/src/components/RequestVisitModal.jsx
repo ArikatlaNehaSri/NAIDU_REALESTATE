@@ -1,81 +1,77 @@
 import { useState } from "react";
 
-const RequestVisitModal = ({ onClose }) => {
+const RequestVisitModal = ({ onClose, property }) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!name || !phone) {
-      alert("Please enter your name and phone number");
-      return;
-    }
+    const newRequest = {
+      id: Date.now(),
+      name,
+      phone,
+      propertyTitle: property.title,
+      location: property.location,
+      price: property.price,
+    };
 
-    // For now: frontend-only success
-    setSubmitted(true);
+    const existing =
+      JSON.parse(localStorage.getItem("visitRequests")) || [];
 
-    // Auto close after 2 seconds
-    setTimeout(() => {
-      onClose();
-      setSubmitted(false);
-      setName("");
-      setPhone("");
-    }, 2000);
+    localStorage.setItem(
+      "visitRequests",
+      JSON.stringify([...existing, newRequest])
+    );
+
+    alert("Request submitted. Admin will contact you shortly.");
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-      <div className="bg-[#111] w-96 p-6 rounded-lg border border-yellow-600">
-        {!submitted ? (
-          <>
-            <h2 className="text-xl text-yellow-400 font-semibold mb-4">
-              Request Site Visit
-            </h2>
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-[#111] p-6 rounded w-full max-w-sm border border-yellow-600 relative">
 
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                placeholder="Your Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full mb-3 p-2 bg-black border border-gray-600 text-white rounded"
-              />
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-400 hover:text-yellow-400"
+        >
+          ✕
+        </button>
 
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full mb-4 p-2 bg-black border border-gray-600 text-white rounded"
-              />
+        <h2 className="text-xl font-bold text-yellow-400 mb-4">
+          Request Site Visit
+        </h2>
 
-              <button
-                type="submit"
-                className="w-full bg-yellow-500 text-black py-2 rounded font-semibold hover:bg-yellow-400 transition"
-              >
-                Submit Request
-              </button>
-            </form>
+        <p className="text-gray-400 mb-3 text-sm">
+          Property: <b>{property.title}</b>
+        </p>
 
-            <button
-              onClick={onClose}
-              className="w-full mt-3 text-sm text-gray-400 hover:text-white"
-            >
-              Cancel
-            </button>
-          </>
-        ) : (
-          <div className="text-center py-8">
-            <h3 className="text-yellow-400 text-lg font-semibold mb-2">
-              Request Submitted ✅
-            </h3>
-            <p className="text-gray-300 text-sm">
-              Our team will contact you shortly.
-            </p>
-          </div>
-        )}
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Your Name"
+            className="w-full mb-3 px-4 py-2 bg-black border border-gray-600 rounded"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+
+          <input
+            type="tel"
+            placeholder="Phone Number"
+            className="w-full mb-4 px-4 py-2 bg-black border border-gray-600 rounded"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+          />
+
+          <button
+            className="w-full bg-yellow-500 text-black py-2 rounded font-semibold"
+          >
+            Submit Request
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 const WhatsAppButton = () => {
-  const phone = "91XXXXXXXXXX"; // replace with your WhatsApp number
+  const phone = "+918500662449"; // replace with your WhatsApp number
 
   return (
     <a

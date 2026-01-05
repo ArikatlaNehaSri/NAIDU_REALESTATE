@@ -8,3 +8,11 @@ body {
 html {
   scroll-behavior: smooth;
 }
+.input {
+  width: 100%;
+  padding: 10px;
+  background: black;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  color: white;
+}
