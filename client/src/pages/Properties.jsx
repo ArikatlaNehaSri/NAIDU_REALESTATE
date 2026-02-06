@@ -1,72 +1,49 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 import PropertyCard from "../components/PropertyCard";
-import PropertyFilters from "../components/PropertyFilters";
-
-/* ---------- Animations ---------- */
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 },
-  },
-};
 
 const Properties = () => {
-  const [filters, setFilters] = useState({});
   const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  /* ---------- LOAD PROPERTIES ---------- */
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("properties")) || [];
-    setProperties(stored);
+    const fetchProperties = async () => {
+      const snap = await getDocs(collection(db, "properties"));
+      const data = snap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setProperties(data);
+      setLoading(false);
+    };
+
+    fetchProperties();
   }, []);
 
-  /* ---------- APPLY FILTERS ---------- */
-  const filtered = properties.filter((p) => {
+  if (loading) {
     return (
-      (!filters.type || p.type === filters.type) &&
-      (!filters.location ||
-        p.location?.toLowerCase().includes(filters.location.toLowerCase())) &&
-      (!filters.budget ||
-        Number(p.price) <= Number(filters.budget))
+      <p className="text-center text-gray-400 mt-20">
+        Loading properties...
+      </p>
     );
-  });
+  }
 
   return (
     <div className="px-6 md:px-14 py-10 text-white min-h-screen">
-      <h1 className="text-4xl md:text-5xl font-bold text-yellow-400 mb-6">
-        All Properties
+      <h1 className="text-4xl font-bold text-yellow-400 mb-8">
+        Available Properties
       </h1>
 
-      <p className="text-gray-400 mb-6 max-w-3xl">
-        Browse verified properties and filter them based on your budget,
-        location, and property type.
-      </p>
-
-      {/* FILTERS */}
-      <PropertyFilters filters={filters} setFilters={setFilters} />
-
-      {/* PROPERTY LIST */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{ visible: { transition: { staggerChildren: 0.15 } } }}
-        className="grid md:grid-cols-3 gap-8"
-      >
-        {filtered.length > 0 ? (
-          filtered.map((p) => (
-            <motion.div key={p.id} variants={fadeUp}>
-              <PropertyCard property={p} />
-            </motion.div>
-          ))
+      <div className="grid md:grid-cols-3 gap-8">
+        {properties.length === 0 ? (
+          <p className="text-gray-400">No properties yet.</p>
         ) : (
-          <p className="text-gray-400 col-span-3">
-            No properties match your filters.
-          </p>
+          properties.map((p) => (
+            <PropertyCard key={p.id} property={p} />
+          ))
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -5,21 +5,9 @@ import Home from "./pages/Home";
 import Properties from "./pages/Properties";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminProtected from "./pages/AdminProtected";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
-
-/* ---------- ADMIN AUTH CHECK ---------- */
-const isAdminLoggedIn = () => {
-  return localStorage.getItem("adminLoggedIn") === "true";
-};
-
-/* ---------- PROTECTED ROUTE ---------- */
-const ProtectedRoute = ({ children }) => {
-  if (!isAdminLoggedIn()) {
-    return <Navigate to="/secure-admin-login" replace />;
-  }
-  return children;
-};
 
 function App() {
   return (
@@ -33,29 +21,20 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/properties" element={<Properties />} />
 
-            {/* SECRET ADMIN LOGIN (NOT VISIBLE ANYWHERE) */}
-            <Route
-              path="/secure-admin-login"
-              element={
-                isAdminLoggedIn() ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <AdminLogin />
-                )
-              }
-            />
+            {/* SECRET ADMIN LOGIN */}
+            <Route path="/secure-admin-login" element={<AdminLogin />} />
 
-            {/* ADMIN DASHBOARD (PROTECTED) */}
+            {/* ADMIN DASHBOARD (FIREBASE PROTECTED) */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <AdminProtected>
                   <AdminDashboard />
-                </ProtectedRoute>
+                </AdminProtected>
               }
             />
 
-            {/* FALLBACK: UNKNOWN ROUTES GO HOME */}
+            {/* FALLBACK */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

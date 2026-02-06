@@ -1,77 +1,65 @@
 import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/config";
 
-const RequestVisitModal = ({ onClose, property }) => {
+const RequestVisitModal = ({ property, onClose }) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const submit = async () => {
+    if (!name || !phone) {
+      alert("Please fill all details");
+      return;
+    }
 
-    const newRequest = {
-      id: Date.now(),
+    await addDoc(collection(db, "visitRequests"), {
       name,
       phone,
+      propertyId: property.id,
       propertyTitle: property.title,
-      location: property.location,
-      price: property.price,
-    };
+      createdAt: serverTimestamp(),
+    });
 
-    const existing =
-      JSON.parse(localStorage.getItem("visitRequests")) || [];
-
-    localStorage.setItem(
-      "visitRequests",
-      JSON.stringify([...existing, newRequest])
-    );
-
-    alert("Request submitted. Admin will contact you shortly.");
+    alert("Request sent. Admin will contact you.");
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-[#111] p-6 rounded w-full max-w-sm border border-yellow-600 relative">
-
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-gray-400 hover:text-yellow-400"
-        >
-          ✕
-        </button>
-
-        <h2 className="text-xl font-bold text-yellow-400 mb-4">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+      <div className="bg-[#111] p-6 rounded w-80">
+        <h3 className="text-yellow-400 text-lg mb-4">
           Request Site Visit
-        </h2>
+        </h3>
 
-        <p className="text-gray-400 mb-3 text-sm">
-          Property: <b>{property.title}</b>
-        </p>
+        <input
+          placeholder="Your Name"
+          className="input mb-3"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
 
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Your Name"
-            className="w-full mb-3 px-4 py-2 bg-black border border-gray-600 rounded"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+        <input
+          placeholder="Phone Number"
+          className="input mb-4"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
 
-          <input
-            type="tel"
-            placeholder="Phone Number"
-            className="w-full mb-4 px-4 py-2 bg-black border border-gray-600 rounded"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-          />
+        <div className="flex gap-3">
+          <button
+            onClick={submit}
+            className="bg-yellow-500 text-black px-4 py-2 rounded"
+          >
+            Submit
+          </button>
 
           <button
-            className="w-full bg-yellow-500 text-black py-2 rounded font-semibold"
+            onClick={onClose}
+            className="bg-gray-700 px-4 py-2 rounded"
           >
-            Submit Request
+            Cancel
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );

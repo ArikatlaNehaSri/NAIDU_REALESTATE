@@ -1,11 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { db } from "../firebase/config";
+import { uploadImage } from "../supabase/uploadImage";
 
-/* ---------- HELPERS ---------- */
-const getData = (key) => JSON.parse(localStorage.getItem(key)) || [];
-const setData = (key, value) =>
-  localStorage.setItem(key, JSON.stringify(value));
-
+/* ---------- EMPTY FORM ---------- */
 const emptyForm = {
   type: "House",
   title: "",
@@ -23,47 +30,96 @@ const emptyForm = {
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
+  /* ---------- ADMIN PROTECTION ---------- */
   if (localStorage.getItem("adminLoggedIn") !== "true") {
     return <Navigate to="/secure-admin-login" replace />;
   }
 
+  /* ---------- STATES ---------- */
   const [form, setForm] = useState(emptyForm);
   const [images, setImages] = useState([]);
-  const [properties, setProperties] = useState(getData("properties"));
+  const [properties, setProperties] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  /* ---------- HANDLERS ---------- */
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setImages(previews);
-  };
-
-  const publishProperty = (e) => {
-    e.preventDefault();
-
-    const newProperty = {
-      id: Date.now(),
-      ...form,
-      images, // TEMP previews
-      createdAt: new Date().toISOString(),
-    };
-
-    const updated = [newProperty, ...properties];
-    setProperties(updated);
-    setData("properties", updated);
-
-    alert(
-      "Property published.\nImages are temporary until backend is added."
+  /* ---------- LOAD PROPERTIES ---------- */
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "properties"), (snap) =>
+      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     );
 
-    setForm(emptyForm);
-    setImages([]);
+    return unsub;
+  }, []);
+
+  /* ---------- HANDLERS ---------- */
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleImages = (e) => setImages([...e.target.files]);
+
+  /* ---------- PUBLISH / UPDATE PROPERTY ---------- */
+  const publishProperty = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let imageUrls = [];
+
+      // upload new images if selected
+      if (images.length > 0) {
+        for (let img of images) {
+          const url = await uploadImage(img);
+          imageUrls.push(url);
+        }
+      }
+
+      if (editingId) {
+        // UPDATE EXISTING PROPERTY
+        await updateDoc(doc(db, "properties", editingId), {
+          ...form,
+          ...(imageUrls.length > 0 && { images: imageUrls }),
+        });
+
+        alert("Property updated successfully");
+        setEditingId(null);
+      } else {
+        // ADD NEW PROPERTY
+        await addDoc(collection(db, "properties"), {
+          ...form,
+          images: imageUrls,
+          approved: true,
+          createdAt: serverTimestamp(),
+        });
+
+        alert("Property published successfully");
+      }
+
+      setForm(emptyForm);
+      setImages([]);
+    } catch (err) {
+      console.error("Publish error:", err);
+      alert("Error publishing property");
+    }
+
+    setLoading(false);
   };
 
+  /* ---------- EDIT PROPERTY ---------- */
+  const editProperty = (property) => {
+    setForm(property);
+    setEditingId(property.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ---------- DELETE PROPERTY ---------- */
+  const deleteProperty = async (id) => {
+    const confirmDelete = window.confirm("Delete this property?");
+    if (!confirmDelete) return;
+
+    await deleteDoc(doc(db, "properties", id));
+  };
+
+  /* ---------- LOGOUT ---------- */
   const logout = () => {
     localStorage.removeItem("adminLoggedIn");
     navigate("/secure-admin-login", { replace: true });
@@ -71,118 +127,121 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 text-white">
-
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-10">
-        <h1 className="text-3xl font-bold text-yellow-400">
-          Admin Dashboard
-        </h1>
+      <div className="flex justify-between mb-10">
+        <h1 className="text-3xl font-bold text-yellow-400">Admin Dashboard</h1>
         <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">
           Logout
         </button>
       </div>
 
-      {/* ADD PROPERTY */}
+      {/* ---------- ADD / EDIT PROPERTY FORM ---------- */}
       <form
         onSubmit={publishProperty}
-        className="bg-[#111] border border-gray-700 p-8 rounded space-y-8"
+        className="bg-[#111] p-8 border border-gray-700 rounded mb-14 space-y-6"
       >
-        {/* STEP 1 */}
-        <div>
-          <h3 className="text-yellow-400 mb-2">Property Type</h3>
-          <select
-            name="type"
-            value={form.type}
-            onChange={handleChange}
-            className="input max-w-sm"
-          >
-            <option>House</option>
-            <option>Plot</option>
-            <option>Land</option>
-          </select>
-        </div>
+        <h2 className="text-xl text-yellow-400">
+          {editingId ? "Edit Property" : "Add Property"}
+        </h2>
 
-        {/* BASIC INFO */}
-        <div>
-          <h3 className="text-yellow-400 mb-4">Basic Information</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            <input className="input" name="title" placeholder="Title" value={form.title} onChange={handleChange} required />
-            <input className="input" name="location" placeholder="Location" value={form.location} onChange={handleChange} required />
-            <input className="input" name="price" placeholder="Price" value={form.price} onChange={handleChange} required />
-          </div>
-        </div>
+        <select name="type" className="input" onChange={handleChange} value={form.type}>
+          <option>House</option>
+          <option>Plot</option>
+          <option>Land</option>
+        </select>
 
-        {/* PROPERTY DETAILS */}
-        <div>
-          <h3 className="text-yellow-400 mb-4">Property Details</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {form.type === "House" && (
-              <>
-                <input className="input" name="facing" placeholder="Facing" value={form.facing} onChange={handleChange} />
-                <input className="input" name="floors" placeholder="Floors" value={form.floors} onChange={handleChange} />
-                <select className="input" name="parking" value={form.parking} onChange={handleChange}>
-                  <option>Yes</option>
-                  <option>No</option>
-                </select>
-              </>
-            )}
+        <input
+          className="input"
+          name="title"
+          placeholder="Title"
+          value={form.title}
+          onChange={handleChange}
+          required
+        />
 
-            {form.type !== "House" && (
-              <input className="input" name="area" placeholder="Area / Plot Size" value={form.area} onChange={handleChange} />
-            )}
+        <input
+          className="input"
+          name="location"
+          placeholder="Location"
+          value={form.location}
+          onChange={handleChange}
+          required
+        />
 
-            <input className="input" name="roadWidth" placeholder="Road Width" value={form.roadWidth} onChange={handleChange} />
-          </div>
-        </div>
+        <input
+          className="input"
+          name="price"
+          placeholder="Price"
+          value={form.price}
+          onChange={handleChange}
+          required
+        />
 
-        {/* MEDIA */}
-        <div>
-          <h3 className="text-yellow-400 mb-4">Images & Video</h3>
+        <input type="file" multiple accept="image/*" onChange={handleImages} />
 
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="text-sm"
-          />
+        <textarea
+          className="input h-28"
+          name="description"
+          placeholder="Description"
+          value={form.description}
+          onChange={handleChange}
+        />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            {images.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                alt="preview"
-                className="h-32 w-full object-cover rounded"
-              />
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-yellow-500 text-black px-8 py-3 rounded font-semibold"
+        >
+          {loading
+            ? editingId
+              ? "Updating..."
+              : "Publishing..."
+            : editingId
+            ? "Update Property"
+            : "Publish Property"}
+        </button>
+      </form>
+
+      {/* ---------- ALL PROPERTIES LIST ---------- */}
+      <section>
+        <h2 className="text-2xl text-yellow-400 mb-6">All Properties</h2>
+
+        {properties.length === 0 ? (
+          <p className="text-gray-400">No properties yet</p>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6">
+            {properties.map((p) => (
+              <div key={p.id} className="bg-[#111] border border-gray-700 rounded p-4">
+                <img
+                  src={p.images?.[0]}
+                  alt={p.title}
+                  className="w-full h-40 object-cover rounded mb-3"
+                />
+
+                <h3 className="text-yellow-400 font-semibold">{p.title}</h3>
+                <p className="text-gray-400">{p.location}</p>
+                <p className="text-gray-300 mb-3">₹ {p.price}</p>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => editProperty(p)}
+                    className="bg-yellow-500 text-black px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => deleteProperty(p.id)}
+                    className="bg-red-500 px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
-
-          <input
-            className="input mt-4"
-            name="youtube"
-            placeholder="YouTube Video Link (optional)"
-            value={form.youtube}
-            onChange={handleChange}
-          />
-
-          <textarea
-            className="input h-28 mt-4"
-            name="description"
-            placeholder="Description"
-            value={form.description}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button className="bg-yellow-500 text-black px-8 py-3 rounded font-semibold">
-          Publish Property
-        </button>
-
-        <p className="text-gray-400 text-sm">
-          ⚠ Images are temporary until backend storage is added.
-        </p>
-      </form>
+        )}
+      </section>
     </div>
   );
 };
