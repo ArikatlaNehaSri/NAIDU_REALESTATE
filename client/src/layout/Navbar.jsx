@@ -16,6 +16,7 @@ const Navbar = () => {
   useEffect(() => {
     if (location.pathname === "/") setActive("home");
     else if (location.pathname === "/properties") setActive("properties");
+    else if (location.pathname === "/about") setActive("about");
   }, [location.pathname]);
 
   const linkClass = (id) =>
@@ -33,15 +34,19 @@ const Navbar = () => {
                    text-white px-6 py-4 flex justify-between items-center
                    border-b border-yellow-600"
       >
-        {/* BRAND */}
-        <Link to="/" className="text-xl font-semibold tracking-wide">
-          <span className="text-yellow-400">Naidu</span> Real Estate
+        {/* BRAND WITH LOGO */}
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/logo.jpeg" alt="Naidu Real Estate" className="h-8 w-auto" />
+          <span className="text-xl font-semibold tracking-wide">
+            <span className="text-yellow-400">Naidu</span> Real Estate
+          </span>
         </Link>
 
         {/* DESKTOP MENU */}
         <ul className="hidden md:flex gap-8 text-sm font-medium items-center">
           <Link to="/" className={linkClass("home")}>Home</Link>
           <Link to="/properties" className={linkClass("properties")}>Properties</Link>
+          <Link to="/about" className={linkClass("about")}>About</Link>
 
           <li
             onClick={() => setShowContact(true)}
@@ -83,6 +88,7 @@ const Navbar = () => {
           <ul className="flex flex-col items-center gap-6 py-8 text-sm">
             <Link to="/" onClick={() => setOpen(false)}>Home</Link>
             <Link to="/properties" onClick={() => setOpen(false)}>Properties</Link>
+            <Link to="/about" onClick={() => setOpen(false)}>About</Link>
 
             <li
               onClick={() => { setShowContact(true); setOpen(false); }}
