@@ -1,49 +1,113 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/config";
 import PropertyCard from "../components/PropertyCard";
 
 const Properties = () => {
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [allProperties, setAllProperties] = useState([]);
+  const [filtered, setFiltered] = useState([]);
 
+  /* 🔍 FILTER STATES */
+  const [type, setType] = useState("All");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [location, setLocation] = useState("");
+
+  /* 🔥 LOAD FROM FIRESTORE */
   useEffect(() => {
-    const fetchProperties = async () => {
-      const snap = await getDocs(collection(db, "properties"));
-      const data = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setProperties(data);
-      setLoading(false);
-    };
+    const unsub = onSnapshot(collection(db, "properties"), (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setAllProperties(data);
+      setFiltered(data);
+    });
 
-    fetchProperties();
+    return unsub;
   }, []);
 
-  if (loading) {
-    return (
-      <p className="text-center text-gray-400 mt-20">
-        Loading properties...
-      </p>
-    );
-  }
+  /* 🔎 APPLY FILTERS */
+  useEffect(() => {
+    let data = [...allProperties];
+
+    if (type !== "All") {
+      data = data.filter((p) => p.type === type);
+    }
+
+    if (maxPrice) {
+      data = data.filter((p) => Number(p.price) <= Number(maxPrice));
+    }
+
+    if (location) {
+      data = data.filter((p) =>
+        p.location?.toLowerCase().includes(location.toLowerCase())
+      );
+    }
+
+    setFiltered(data);
+  }, [type, maxPrice, location, allProperties]);
 
   return (
-    <div className="px-6 md:px-14 py-10 text-white min-h-screen">
+    <div className="px-4 md:px-14 py-10 text-white min-h-screen">
+
+      {/* TITLE */}
       <h1 className="text-4xl font-bold text-yellow-400 mb-8">
         Available Properties
       </h1>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {properties.length === 0 ? (
-          <p className="text-gray-400">No properties yet.</p>
-        ) : (
-          properties.map((p) => (
-            <PropertyCard key={p.id} property={p} />
-          ))
-        )}
+      {/* 🔍 FILTER BAR */}
+      <div className="bg-[#111] border border-gray-700 rounded p-4 mb-8 grid gap-4 md:grid-cols-4">
+
+        {/* TYPE */}
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+          className="input"
+        >
+          <option value="All">All Types</option>
+          <option value="House">House</option>
+          <option value="Plot">Plot</option>
+          <option value="Land">Land</option>
+        </select>
+
+        {/* MAX PRICE */}
+        <input
+          type="number"
+          placeholder="Max Price"
+          value={maxPrice}
+          onChange={(e) => setMaxPrice(e.target.value)}
+          className="input"
+        />
+
+        {/* LOCATION SEARCH */}
+        <input
+          type="text"
+          placeholder="Search Location"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className="input"
+        />
+
+        {/* RESET BUTTON */}
+        <button
+          onClick={() => {
+            setType("All");
+            setMaxPrice("");
+            setLocation("");
+          }}
+          className="bg-yellow-500 text-black rounded font-semibold"
+        >
+          Reset
+        </button>
       </div>
+
+      {/* 📦 PROPERTY GRID */}
+      {filtered.length === 0 ? (
+        <p className="text-gray-400">No matching properties found.</p>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-3">
+          {filtered.map((p) => (
+            <PropertyCard key={p.id} property={p} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
