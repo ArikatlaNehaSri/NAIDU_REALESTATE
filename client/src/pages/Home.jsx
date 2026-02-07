@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
-import properties from "../data/properties";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, query, where, limit } from "firebase/firestore";
+import { db } from "../firebase/config";
 import PropertyCard from "../components/PropertyCard";
+import { FaInstagram, FaYoutube } from "react-icons/fa";
 
 /* ---------- Animation Presets ---------- */
 
@@ -61,16 +64,32 @@ const Section = ({ id, bg, children }) => (
 /* ---------- Home ---------- */
 
 const Home = () => {
-  // ✅ Show more properties to make home attractive
-  const featuredProperties = properties.slice(0, 6);
+  const [featuredProperties, setFeaturedProperties] = useState([]);
+
+  /* 🔥 Load real properties from Firebase */
+  useEffect(() => {
+    const q = query(
+      collection(db, "properties"),
+      where("approved", "==", true),
+      limit(3)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      setFeaturedProperties(
+        snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      );
+    });
+
+    return () => unsub();
+  }, []);
 
   return (
     <div className="text-white">
 
-      {/* SECTION 1 — HERO / BRAND */}
+      {/* ---------- HERO ---------- */}
       <Section
         id="home"
-        bg="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80"
+        bg="https://images.unsplash.com/photo-1600585154340-be6161a56a0c"
       >
         <motion.h1
           variants={glowText}
@@ -87,46 +106,50 @@ const Home = () => {
         >
           Your trusted real estate partner in Nellore.
           We specialize in verified plots, residential properties,
-          and professionally coordinated site visits.
+          and professionally guided site visits.
         </motion.p>
 
         <motion.p
           variants={fadeUp}
           className="mt-6 text-gray-400 max-w-3xl md:text-lg"
         >
-          No fake listings • No direct seller confusion • Only genuine properties
+          No fake listings • Safe legal verification • Trusted local experts
         </motion.p>
       </Section>
 
-      {/* SECTION 2 — FEATURED PROPERTIES */}
+      {/* ---------- FEATURED PROPERTIES ---------- */}
       <Section
         id="featured"
-        bg="https://images.unsplash.com/photo-1501183638710-841dd1904471?auto=format&fit=crop&w=1600&q=80"
+        bg="https://images.unsplash.com/photo-1501183638710-841dd1904471"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-yellow-500 mb-8">
           Featured Properties
         </h2>
 
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          className="grid md:grid-cols-3 gap-8"
-        >
-          {featuredProperties.map((p) => (
-            <motion.div
-              key={p.id}
-              variants={fadeUp}
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0px 12px 30px rgba(250,204,21,0.2)",
-              }}
-            >
-              <PropertyCard property={p} />
-            </motion.div>
-          ))}
-        </motion.div>
+        {featuredProperties.length === 0 ? (
+          <p className="text-gray-400">No properties available yet.</p>
+        ) : (
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-3 gap-8"
+          >
+            {featuredProperties.map((p) => (
+              <motion.div
+                key={p.id}
+                variants={fadeUp}
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0px 12px 30px rgba(250,204,21,0.2)",
+                }}
+              >
+                <PropertyCard property={p} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
 
         <a
           href="/properties"
@@ -136,7 +159,7 @@ const Home = () => {
         </a>
       </Section>
 
-      {/* TRUST STATS */}
+      {/* ---------- TRUST STATS ---------- */}
       <section className="py-20 bg-black text-center">
         <div className="grid md:grid-cols-3 gap-10 max-w-5xl mx-auto">
           <div>
@@ -154,10 +177,10 @@ const Home = () => {
         </div>
       </section>
 
-      {/* SECTION 3 — PROCESS */}
+      {/* ---------- PROCESS ---------- */}
       <Section
         id="process"
-        bg="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1600&q=80"
+        bg="https://images.unsplash.com/photo-1484154218962-a197022b5858"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-yellow-500 mb-10">
           How Our Process Works
@@ -171,10 +194,10 @@ const Home = () => {
           className="grid md:grid-cols-4 gap-10 text-gray-300 max-w-6xl"
         >
           {[
-            ["Browse Properties", "View verified listings with accurate details."],
-            ["Submit Request", "Request site visit or property information."],
-            ["Guided Visit", "Our team assists you during the site visit."],
-            ["Close Safely", "We support documentation and negotiations."],
+            ["Browse Properties", "View verified listings with full details."],
+            ["Submit Request", "Request site visit or more information."],
+            ["Guided Visit", "Our team assists you during site visit."],
+            ["Close Safely", "We support legal process & negotiations."],
           ].map(([title, desc], i) => (
             <motion.div key={i} variants={fadeUp}>
               <h3 className="text-yellow-400 font-semibold mb-2">
@@ -186,10 +209,10 @@ const Home = () => {
         </motion.div>
       </Section>
 
-      {/* SECTION 4 — WHY US */}
+      {/* ---------- WHY US ---------- */}
       <Section
         id="why-us"
-        bg="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1600&q=80"
+        bg="https://images.unsplash.com/photo-1560518883-ce09059eeffa"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-yellow-500 mb-10">
           Why Choose Naidu Real Estate
@@ -203,9 +226,9 @@ const Home = () => {
           className="grid md:grid-cols-3 gap-12 max-w-6xl text-gray-300"
         >
           {[
-            ["Verified Listings Only", "Every property is thoroughly verified."],
-            ["Transparent Broker Model", "Clear communication with no confusion."],
-            ["Local Area Expertise", "Deep knowledge of Nellore market trends."],
+            ["Verified Listings Only", "Every property is legally verified."],
+            ["Transparent Broker Model", "Clear communication, no confusion."],
+            ["Local Area Expertise", "Deep knowledge of Nellore market."],
           ].map(([title, desc], i) => (
             <motion.div key={i} variants={fadeUp}>
               <h3 className="text-yellow-400 font-semibold mb-2">{title}</h3>
@@ -215,13 +238,13 @@ const Home = () => {
         </motion.div>
       </Section>
 
-      {/* CALL TO ACTION */}
+      {/* ---------- CTA ---------- */}
       <section className="py-20 bg-yellow-500 text-black text-center">
         <h2 className="text-3xl md:text-4xl font-bold mb-4">
           Looking to Buy or Sell Property?
         </h2>
         <p className="mb-6 text-lg">
-          Get verified listings and professional guidance from start to finish.
+          Get verified listings and expert guidance from start to finish.
         </p>
         <a
           href="/properties"
@@ -231,10 +254,10 @@ const Home = () => {
         </a>
       </section>
 
-      {/* FAQ */}
+      {/* ---------- FAQ ---------- */}
       <Section
-        id="contact"
-        bg="https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1600&q=80"
+        id="faq"
+        bg="https://images.unsplash.com/photo-1568605114967-8130f3a36994"
       >
         <h2 className="text-4xl md:text-5xl font-bold text-yellow-500 mb-8">
           Frequently Asked Questions
@@ -258,7 +281,7 @@ const Home = () => {
             ],
             [
               "How to send photos/videos?",
-              "Please send them via WhatsApp for faster approval.",
+              "Send via WhatsApp for faster approval and response.",
             ],
           ].map(([q, a], i) => (
             <motion.p key={i} variants={fadeUp}>
@@ -269,6 +292,38 @@ const Home = () => {
           ))}
         </motion.div>
       </Section>
+{/* ---------- FOLLOW US ON ---------- */}
+<section className="py-16 bg-black text-center border-t border-gray-800">
+  <h2 className="text-2xl md:text-3xl font-bold text-yellow-400 mb-4">
+    Follow Us On
+  </h2>
+
+  <p className="text-gray-400 mb-6">
+    Stay updated with latest properties, site visits, and real estate tips.
+  </p>
+
+  <div className="flex justify-center gap-8 text-4xl">
+
+    <a
+      href="https://instagram.com/yourusername"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-pink-500 hover:scale-110 transition"
+    >
+      <FaInstagram />
+    </a>
+
+    <a
+      href="https://youtube.com/yourchannel"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-red-500 hover:scale-110 transition"
+    >
+      <FaYoutube />
+    </a>
+
+  </div>
+</section>
 
     </div>
   );

@@ -14,7 +14,7 @@ const About = () => {
         About Naidu Real Estate
       </motion.h1>
 
-      {/* COMPANY INTRO (SEO IMPORTANT) */}
+      {/* COMPANY INTRO */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -53,7 +53,7 @@ const About = () => {
         ))}
       </div>
 
-      {/* FOUNDERS SECTION */}
+      {/* FOUNDERS */}
       <h2 className="text-3xl font-bold text-yellow-400 mt-20 mb-10">
         Our Leadership
       </h2>
@@ -79,11 +79,10 @@ const About = () => {
 
           <p className="text-gray-300 mt-4 text-sm leading-relaxed">
             Vision-driven real estate entrepreneur with deep local knowledge of
-            the Nellore property market.<strong> Experienced real estate professional managing buyer and seller relationships,
-  property verification, negotiations, and complete transaction support.</strong> He is committed to building a
-            <strong> transparent, trustworthy, and customer-focused real estate
-            service</strong> that helps buyers and sellers make confident
-            property decisions with complete legal clarity.
+            the Nellore property market. Experienced in buyer & seller
+            relationships, property verification, negotiations, and complete
+            transaction support. Committed to transparent and trustworthy
+            real-estate services.
           </p>
         </motion.div>
 
@@ -106,13 +105,11 @@ const About = () => {
           <p className="text-gray-400">Co-Founder</p>
 
           <p className="text-gray-300 mt-4 text-sm leading-relaxed">
-            <p className="text-gray-300 mt-4 text-sm leading-relaxed">
-  <strong>Handles the digital side of Naidu Real Estate </strong>including website management,
-  YouTube content, social media presence, and online customer support.<strong> Focused
-  on using technology and digital marketing to make property searching simple,
-  transparent, and accessible for modern buyers.</strong>
-</p>
-
+            Handles the digital side of Naidu Real Estate including website
+            management, YouTube content, social media presence, and online
+            customer support. Focused on using technology and digital marketing
+            to make property searching simple, transparent, and accessible for
+            modern buyers.
           </p>
         </motion.div>
       </div>
@@ -125,14 +122,13 @@ const About = () => {
 
         <p className="text-gray-300 leading-relaxed">
           To provide <strong>100% verified properties</strong>, eliminate fake
-          listings, ensure safe legal documentation, and deliver a
-          <strong> smooth, transparent, and technology-driven real estate
-          experience</strong> for every customer.
+          listings, ensure safe legal documentation, and deliver a smooth,
+          transparent, and technology-driven real estate experience for every
+          customer.
         </p>
 
-        {/* SEO LINE FOR GOOGLE */}
         <p className="text-gray-500 mt-6 text-sm">
-          Founder of Naidu Real Estate Nellore –
+          Founder of Naidu Real Estate Nellore —
           <strong> Venkateswarlu Arikatla</strong>.
         </p>
       </div>
