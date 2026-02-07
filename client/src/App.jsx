@@ -12,6 +12,7 @@ import PropertyDetails from "./pages/PropertyDetails";
 import AdminAnalytics from "./pages/AdminAnalytics";
 
 
+
 function App() {
   return (
     <BrowserRouter>
