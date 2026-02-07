@@ -9,6 +9,7 @@ import AdminProtected from "./pages/AdminProtected";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
 import PropertyDetails from "./pages/PropertyDetails";
+import AdminAnalytics from "./pages/AdminAnalytics";
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             {/* PUBLIC ROUTES */}
             <Route path="/" element={<Home />} />
             <Route path="/properties" element={<Properties />} />
+<Route path="/admin-analytics" element={<AdminAnalytics />} />
 
             {/* SECRET ADMIN LOGIN */}
             <Route path="/secure-admin-login" element={<AdminLogin />} />

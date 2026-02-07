@@ -34,16 +34,30 @@ const AdminDashboard = () => {
   const [form, setForm] = useState(emptyForm);
   const [images, setImages] = useState([]);
   const [properties, setProperties] = useState([]);
+  const [visits, setVisits] = useState([]);
+  const [sells, setSells] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  /* ---------- LOAD PROPERTIES ---------- */
+  /* ---------- LOAD DATA ---------- */
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "properties"), (snap) => {
-      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const unsubProperties = onSnapshot(collection(db, "properties"), (snap) =>
+      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    );
 
-    return unsub;
+    const unsubVisits = onSnapshot(collection(db, "visitRequests"), (snap) =>
+      setVisits(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    );
+
+    const unsubSells = onSnapshot(collection(db, "sellRequests"), (snap) =>
+      setSells(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+    );
+
+    return () => {
+      unsubProperties();
+      unsubVisits();
+      unsubSells();
+    };
   }, []);
 
   /* ---------- HANDLERS ---------- */
@@ -52,10 +66,10 @@ const AdminDashboard = () => {
 
   const handleImages = (e) => {
     const files = Array.from(e.target.files);
-    setImages(files); // ✅ store ALL selected images
+    setImages(files);
   };
 
-  /* ---------- PUBLISH / UPDATE PROPERTY ---------- */
+  /* ---------- ADD / UPDATE PROPERTY ---------- */
   const publishProperty = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -63,16 +77,11 @@ const AdminDashboard = () => {
     try {
       let imageUrls = [];
 
-      // 🔥 upload new images if selected
       if (images.length > 0) {
-  imageUrls = await Promise.all(
-    images.map((img) => uploadImage(img))
-  );
-}
-
+        imageUrls = await Promise.all(images.map((img) => uploadImage(img)));
+      }
 
       if (editingId) {
-        // ✅ UPDATE EXISTING PROPERTY
         await updateDoc(doc(db, "properties", editingId), {
           ...form,
           ...(imageUrls.length > 0 && { images: imageUrls }),
@@ -81,7 +90,6 @@ const AdminDashboard = () => {
         alert("Property updated successfully");
         setEditingId(null);
       } else {
-        // ✅ ADD NEW PROPERTY
         await addDoc(collection(db, "properties"), {
           ...form,
           images: imageUrls,
@@ -111,30 +119,50 @@ const AdminDashboard = () => {
 
   /* ---------- DELETE PROPERTY ---------- */
   const deleteProperty = async (id) => {
-    const confirmDelete = window.confirm("Delete this property?");
-    if (!confirmDelete) return;
-
+    if (!window.confirm("Delete this property?")) return;
     await deleteDoc(doc(db, "properties", id));
   };
 
+  /* ---------- DELETE REQUESTS ---------- */
+  const deleteVisit = async (id) => {
+    await deleteDoc(doc(db, "visitRequests", id));
+  };
+
+  const deleteSell = async (id) => {
+    await deleteDoc(doc(db, "sellRequests", id));
+  };
+
   /* ---------- LOGOUT ---------- */
-  const logout = async () => {
+  const logout = () => {
     navigate("/secure-admin-login", { replace: true });
   };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 text-white">
+
       {/* HEADER */}
-      <div className="flex justify-between mb-10">
-        <h1 className="text-3xl font-bold text-yellow-400">
-          Admin Dashboard
-        </h1>
-        <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">
-          Logout
-        </button>
+      <div className="flex flex-wrap gap-3 justify-between items-center mb-10">
+        <h1 className="text-3xl font-bold text-yellow-400">Admin Dashboard</h1>
+
+        <div className="flex gap-3">
+          {/* 📊 ANALYTICS BUTTON */}
+          <button
+            onClick={() => navigate("/admin-analytics")}
+            className="bg-yellow-500 text-black px-4 py-2 rounded"
+          >
+            Analytics
+          </button>
+
+          <button
+            onClick={logout}
+            className="bg-red-500 px-4 py-2 rounded"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
-      {/* ---------- ADD / EDIT PROPERTY FORM ---------- */}
+      {/* ---------- ADD / EDIT PROPERTY ---------- */}
       <form
         onSubmit={publishProperty}
         className="bg-[#111] p-8 border border-gray-700 rounded mb-14 space-y-6"
@@ -146,62 +174,21 @@ const AdminDashboard = () => {
         <select
           name="type"
           className="input"
-          onChange={handleChange}
           value={form.type}
+          onChange={handleChange}
         >
           <option>House</option>
           <option>Plot</option>
           <option>Land</option>
         </select>
 
-        <input
-          className="input"
-          name="title"
-          placeholder="Title"
-          value={form.title}
-          onChange={handleChange}
-          required
-        />
+        <input className="input" name="title" placeholder="Title" value={form.title} onChange={handleChange} required />
+        <input className="input" name="location" placeholder="Location" value={form.location} onChange={handleChange} required />
+        <input className="input" name="price" placeholder="Price" value={form.price} onChange={handleChange} required />
 
-        <input
-          className="input"
-          name="location"
-          placeholder="Location"
-          value={form.location}
-          onChange={handleChange}
-          required
-        />
+        <input type="file" accept="image/*" multiple onChange={handleImages} />
 
-        <input
-          className="input"
-          name="price"
-          placeholder="Price"
-          value={form.price}
-          onChange={handleChange}
-          required
-        />
-
-        {/* MULTI IMAGE INPUT */}
-        <input
-  type="file"
-  accept="image/*"
-  multiple
-  onChange={(e) => {
-    const files = Array.from(e.target.files);
-    console.log("Selected files:", files.length); // DEBUG
-    setImages(files);
-  }}
-  className="text-white"
-/>
-
-
-        <textarea
-          className="input h-28"
-          name="description"
-          placeholder="Description"
-          value={form.description}
-          onChange={handleChange}
-        />
+        <textarea className="input h-28" name="description" placeholder="Description" value={form.description} onChange={handleChange} />
 
         <button
           type="submit"
@@ -218,7 +205,7 @@ const AdminDashboard = () => {
         </button>
       </form>
 
-      {/* ---------- ALL PROPERTIES LIST ---------- */}
+      {/* ---------- ALL PROPERTIES ---------- */}
       <section>
         <h2 className="text-2xl text-yellow-400 mb-6">All Properties</h2>
 
@@ -227,38 +214,64 @@ const AdminDashboard = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((p) => (
-              <div
-                key={p.id}
-                className="bg-[#111] border border-gray-700 rounded p-4"
-              >
-                <img
-                  src={p.images?.[0]}
-                  alt={p.title}
-                  className="w-full h-40 object-cover rounded mb-3"
-                />
+              <div key={p.id} className="bg-[#111] border border-gray-700 rounded p-4">
+                <img src={p.images?.[0]} alt={p.title} className="w-full h-40 object-cover rounded mb-3" />
 
                 <h3 className="text-yellow-400 font-semibold">{p.title}</h3>
                 <p className="text-gray-400">{p.location}</p>
                 <p className="text-gray-300 mb-3">₹ {p.price}</p>
 
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => editProperty(p)}
-                    className="bg-yellow-500 text-black px-3 py-1 rounded"
-                  >
+                  <button onClick={() => editProperty(p)} className="bg-yellow-500 text-black px-3 py-1 rounded">
                     Edit
                   </button>
-
-                  <button
-                    onClick={() => deleteProperty(p.id)}
-                    className="bg-red-500 px-3 py-1 rounded"
-                  >
+                  <button onClick={() => deleteProperty(p.id)} className="bg-red-500 px-3 py-1 rounded">
                     Delete
                   </button>
                 </div>
               </div>
             ))}
           </div>
+        )}
+      </section>
+
+      {/* ---------- VISIT REQUESTS ---------- */}
+      <section className="mt-16">
+        <h2 className="text-2xl text-yellow-400 mb-6">Visit Requests</h2>
+
+        {visits.length === 0 ? (
+          <p className="text-gray-400">No visit requests</p>
+        ) : (
+          visits.map((v) => (
+            <div key={v.id} className="bg-[#111] border border-gray-700 p-4 mb-3 rounded">
+              <p><b>{v.name}</b> — {v.phone}</p>
+              <p className="text-gray-400">{v.propertyTitle}</p>
+
+              <button onClick={() => deleteVisit(v.id)} className="mt-2 bg-red-500 px-3 py-1 rounded">
+                Mark Done
+              </button>
+            </div>
+          ))
+        )}
+      </section>
+
+      {/* ---------- SELL REQUESTS ---------- */}
+      <section className="mt-12">
+        <h2 className="text-2xl text-yellow-400 mb-6">Sell Requests</h2>
+
+        {sells.length === 0 ? (
+          <p className="text-gray-400">No sell requests</p>
+        ) : (
+          sells.map((s) => (
+            <div key={s.id} className="bg-[#111] border border-gray-700 p-4 mb-3 rounded">
+              <p><b>{s.ownerName}</b> — {s.phone}</p>
+              <p className="text-gray-400">{s.type} | {s.location} | ₹ {s.price}</p>
+
+              <button onClick={() => deleteSell(s.id)} className="mt-2 bg-red-500 px-3 py-1 rounded">
+                Remove
+              </button>
+            </div>
+          ))
         )}
       </section>
     </div>
