@@ -1,13 +1,15 @@
 import { supabase } from "./client";
 
 export const uploadImage = async (file) => {
-  console.log("Supabase upload started");
+  if (!file) return null;
 
-  const fileName = `${Date.now()}-${file.name}`;
+  // ✅ create UNIQUE filename every time
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${Date.now()}-${Math.random()
+    .toString(36)
+    .substring(2, 10)}.${fileExt}`;
 
-  console.log("Uploading to bucket: properties");
-
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from("properties")
     .upload(fileName, file);
 
@@ -16,13 +18,10 @@ export const uploadImage = async (file) => {
     throw error;
   }
 
-  console.log("Upload success:", data);
-
-  const { data: publicData } = supabase.storage
+  // ✅ get PUBLIC URL
+  const { data } = supabase.storage
     .from("properties")
     .getPublicUrl(fileName);
 
-  console.log("Public URL:", publicData.publicUrl);
-
-  return publicData.publicUrl;
+  return data.publicUrl;
 };

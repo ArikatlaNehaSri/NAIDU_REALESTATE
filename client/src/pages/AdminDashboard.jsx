@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   collection,
   addDoc,
@@ -30,11 +30,6 @@ const emptyForm = {
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  /* ---------- ADMIN PROTECTION ---------- */
-  if (localStorage.getItem("adminLoggedIn") !== "true") {
-    return <Navigate to="/secure-admin-login" replace />;
-  }
-
   /* ---------- STATES ---------- */
   const [form, setForm] = useState(emptyForm);
   const [images, setImages] = useState([]);
@@ -44,9 +39,9 @@ const AdminDashboard = () => {
 
   /* ---------- LOAD PROPERTIES ---------- */
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "properties"), (snap) =>
-      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
+    const unsub = onSnapshot(collection(db, "properties"), (snap) => {
+      setProperties(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
 
     return unsub;
   }, []);
@@ -55,7 +50,10 @@ const AdminDashboard = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleImages = (e) => setImages([...e.target.files]);
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files);
+    setImages(files); // ✅ store ALL selected images
+  };
 
   /* ---------- PUBLISH / UPDATE PROPERTY ---------- */
   const publishProperty = async (e) => {
@@ -65,16 +63,16 @@ const AdminDashboard = () => {
     try {
       let imageUrls = [];
 
-      // upload new images if selected
+      // 🔥 upload new images if selected
       if (images.length > 0) {
-        for (let img of images) {
-          const url = await uploadImage(img);
-          imageUrls.push(url);
-        }
-      }
+  imageUrls = await Promise.all(
+    images.map((img) => uploadImage(img))
+  );
+}
+
 
       if (editingId) {
-        // UPDATE EXISTING PROPERTY
+        // ✅ UPDATE EXISTING PROPERTY
         await updateDoc(doc(db, "properties", editingId), {
           ...form,
           ...(imageUrls.length > 0 && { images: imageUrls }),
@@ -83,7 +81,7 @@ const AdminDashboard = () => {
         alert("Property updated successfully");
         setEditingId(null);
       } else {
-        // ADD NEW PROPERTY
+        // ✅ ADD NEW PROPERTY
         await addDoc(collection(db, "properties"), {
           ...form,
           images: imageUrls,
@@ -120,8 +118,7 @@ const AdminDashboard = () => {
   };
 
   /* ---------- LOGOUT ---------- */
-  const logout = () => {
-    localStorage.removeItem("adminLoggedIn");
+  const logout = async () => {
     navigate("/secure-admin-login", { replace: true });
   };
 
@@ -129,7 +126,9 @@ const AdminDashboard = () => {
     <div className="max-w-7xl mx-auto px-6 py-10 text-white">
       {/* HEADER */}
       <div className="flex justify-between mb-10">
-        <h1 className="text-3xl font-bold text-yellow-400">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold text-yellow-400">
+          Admin Dashboard
+        </h1>
         <button onClick={logout} className="bg-red-500 px-4 py-2 rounded">
           Logout
         </button>
@@ -144,7 +143,12 @@ const AdminDashboard = () => {
           {editingId ? "Edit Property" : "Add Property"}
         </h2>
 
-        <select name="type" className="input" onChange={handleChange} value={form.type}>
+        <select
+          name="type"
+          className="input"
+          onChange={handleChange}
+          value={form.type}
+        >
           <option>House</option>
           <option>Plot</option>
           <option>Land</option>
@@ -177,7 +181,19 @@ const AdminDashboard = () => {
           required
         />
 
-        <input type="file" multiple accept="image/*" onChange={handleImages} />
+        {/* MULTI IMAGE INPUT */}
+        <input
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={(e) => {
+    const files = Array.from(e.target.files);
+    console.log("Selected files:", files.length); // DEBUG
+    setImages(files);
+  }}
+  className="text-white"
+/>
+
 
         <textarea
           className="input h-28"
@@ -209,9 +225,12 @@ const AdminDashboard = () => {
         {properties.length === 0 ? (
           <p className="text-gray-400">No properties yet</p>
         ) : (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {properties.map((p) => (
-              <div key={p.id} className="bg-[#111] border border-gray-700 rounded p-4">
+              <div
+                key={p.id}
+                className="bg-[#111] border border-gray-700 rounded p-4"
+              >
                 <img
                   src={p.images?.[0]}
                   alt={p.title}

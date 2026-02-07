@@ -11,7 +11,8 @@ const AdminLogin = () => {
   const login = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      localStorage.setItem("adminLoggedIn", "true");
+
+      // ✅ No localStorage hack anymore
       navigate("/admin");
     } catch (err) {
       alert("Invalid admin credentials");

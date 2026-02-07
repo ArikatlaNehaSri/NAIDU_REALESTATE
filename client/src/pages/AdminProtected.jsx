@@ -1,16 +1,26 @@
+import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase/config";
 import { Navigate } from "react-router-dom";
-import { getAuth } from "firebase/auth";
 
 const AdminProtected = ({ children }) => {
-  const auth = getAuth();
-  const user = auth.currentUser;
+  const [user, setUser] = useState(undefined);
 
-  // If NOT logged in → send to admin login page
-  if (!user) {
-    return <Navigate to="/secure-admin-login" replace />;
-  }
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
 
-  // If logged in → allow access
+    return () => unsub();
+  }, []);
+
+  // ⏳ wait until Firebase checks login
+  if (user === undefined) return null;
+
+  // ❌ not logged in → go to login
+  if (!user) return <Navigate to="/secure-admin-login" replace />;
+
+  // ✅ logged in → allow admin
   return children;
 };
 

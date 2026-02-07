@@ -1,20 +1,25 @@
 import { useState } from "react";
 import RequestVisitModal from "./RequestVisitModal";
 
+// Swiper
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { Navigation, Pagination } from "swiper/modules";
+
 const PropertyCard = ({ property }) => {
   const [openVisit, setOpenVisit] = useState(false);
 
-  // 🎥 YouTube support
   const youtubeEmbed =
     property.youtube && property.youtube.includes("watch?v=")
       ? property.youtube.replace("watch?v=", "embed/")
       : null;
 
-  // 🖼️ SAFE IMAGE URL
-  const imageUrl =
-    Array.isArray(property.images) && property.images.length > 0
-      ? property.images[0]
-      : null;
+  const images =
+    property.images && property.images.length > 0
+      ? property.images
+      : ["https://via.placeholder.com/400x250?text=No+Image"];
 
   return (
     <div className="bg-[#111] border border-gray-700 rounded overflow-hidden">
@@ -24,22 +29,28 @@ const PropertyCard = ({ property }) => {
         <div className="aspect-video">
           <iframe
             src={youtubeEmbed}
-        
             title="Property Video"
             className="w-full h-full"
             allowFullScreen
           />
         </div>
-      ) : imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={property.title}
-          className="w-full h-48 object-cover"
-        />
       ) : (
-        <div className="w-full h-48 flex items-center justify-center bg-gray-800 text-gray-400">
-          No Image
-        </div>
+        <Swiper
+          modules={[Navigation, Pagination]}
+          navigation
+          pagination={{ clickable: true }}
+          className="h-48"
+        >
+          {images.map((img, i) => (
+            <SwiperSlide key={i}>
+              <img
+                src={img}
+                alt="property"
+                className="w-full h-48 object-cover"
+              />
+            </SwiperSlide>
+          ))}
+        </Swiper>
       )}
 
       {/* DETAILS */}
