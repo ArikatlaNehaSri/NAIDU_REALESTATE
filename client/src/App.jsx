@@ -8,6 +8,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminProtected from "./pages/AdminProtected";
 import Footer from "./components/Footer";
 import WhatsAppButton from "./components/WhatsAppButton";
+import PropertyDetails from "./pages/PropertyDetails";
+
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
 
             {/* SECRET ADMIN LOGIN */}
             <Route path="/secure-admin-login" element={<AdminLogin />} />
+<Route path="/property/:id" element={<PropertyDetails />} />
 
             {/* ADMIN DASHBOARD (FIREBASE PROTECTED) */}
             <Route
