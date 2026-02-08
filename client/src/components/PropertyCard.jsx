@@ -17,30 +17,29 @@ import { Link } from "react-router-dom";
 const PropertyCard = ({ property }) => {
   const [openVisit, setOpenVisit] = useState(false);
 
+  // 🛑 safety
+  if (!property || !property.id) return null;
+
   const youtubeEmbed =
-    property.youtube && property.youtube.includes("watch?v=")
+    property?.youtube && property.youtube.includes("watch?v=")
       ? property.youtube.replace("watch?v=", "embed/")
       : null;
 
   const images =
-    property.images && property.images.length > 0
+    property?.images && property.images.length > 0
       ? property.images
-      : ["https://via.placeholder.com/400x250?text=No+Image"];
+      : ["https://via.placeholder.com/600x400?text=No+Image"];
 
   return (
     <>
-      {/* 🎬 Animated Wrapper */}
       <motion.div
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.98 }}
         transition={{ type: "spring", stiffness: 260, damping: 18 }}
-        className="rounded"
+        className="bg-[#111] border border-gray-700 rounded-xl overflow-hidden hover:border-yellow-400 transition flex flex-col"
       >
-        {/* 🔗 CLICKABLE CARD */}
-        <Link
-          to={`/property/${property.id}`}
-          className="block bg-[#111] border border-gray-700 rounded overflow-hidden hover:border-yellow-400 transition"
-        >
+        {/* CLICKABLE AREA */}
+        <Link to={`/property/${property.id}`} className="block">
           {/* MEDIA */}
           {youtubeEmbed ? (
             <div className="aspect-video">
@@ -56,14 +55,15 @@ const PropertyCard = ({ property }) => {
               modules={[Navigation, Pagination]}
               navigation
               pagination={{ clickable: true }}
-              className="h-48"
+              className="h-48 sm:h-52 md:h-56"
             >
               {images.map((img, i) => (
                 <SwiperSlide key={i}>
                   <img
                     src={img}
                     alt="property"
-                    className="w-full h-48 object-cover"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 </SwiperSlide>
               ))}
@@ -72,28 +72,32 @@ const PropertyCard = ({ property }) => {
 
           {/* DETAILS */}
           <div className="p-4">
-            <h3 className="text-lg font-semibold text-yellow-400">
+            <h3 className="text-base sm:text-lg font-semibold text-yellow-400 line-clamp-1">
               {property.title}
             </h3>
 
-            <p className="text-gray-400">{property.location}</p>
+            <p className="text-sm sm:text-base text-gray-400 line-clamp-1">
+              {property.location}
+            </p>
 
-            <p className="text-gray-300 mt-1">₹ {property.price}</p>
+            <p className="text-gray-300 mt-1 text-sm sm:text-base font-medium">
+              ₹ {property.price}
+            </p>
           </div>
         </Link>
+
+        {/* ✅ BUTTON INSIDE SAME CARD */}
+        <div className="p-4 pt-0">
+          <button
+            onClick={() => setOpenVisit(true)}
+            className="w-full bg-yellow-500 text-black py-2 rounded-lg font-semibold hover:bg-yellow-400 transition min-h-[44px]"
+          >
+            Request Visit
+          </button>
+        </div>
       </motion.div>
 
-      {/* 📞 Request button OUTSIDE link */}
-      <div className="px-4 pb-4 bg-[#111] border border-t-0 border-gray-700 rounded-b">
-        <button
-          onClick={() => setOpenVisit(true)}
-          className="w-full bg-yellow-500 text-black py-2 rounded font-semibold hover:bg-yellow-400 transition"
-        >
-          Request Visit
-        </button>
-      </div>
-
-      {/* 🪟 MODAL */}
+      {/* MODAL */}
       {openVisit && (
         <RequestVisitModal
           property={property}

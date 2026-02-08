@@ -53,10 +53,10 @@ const PropertyDetails = () => {
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="px-6 md:px-14 py-10 text-white min-h-screen"
+      className="px-4 sm:px-6 md:px-14 py-10 text-white min-h-screen overflow-x-hidden"
     >
       {/* TITLE */}
-      <h1 className="text-3xl md:text-4xl font-bold text-yellow-400 mb-4">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-400 mb-4">
         {property.title}
       </h1>
 
@@ -72,20 +72,18 @@ const PropertyDetails = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="w-full h-[250px] md:h-[450px] object-cover rounded border border-gray-700 cursor-pointer"
+          className="w-full h-[220px] sm:h-[300px] md:h-[450px] object-cover rounded border border-gray-700 cursor-pointer"
         />
 
         {/* thumbnails */}
-        <div className="flex gap-3 mt-3 overflow-x-auto">
+        <div className="flex gap-3 mt-3 overflow-x-auto pb-1">
           {images.map((img, index) => (
             <img
               key={index}
               src={img}
               onClick={() => setCurrentImg(index)}
-              className={`h-20 w-28 object-cover rounded cursor-pointer border ${
-                currentImg === index
-                  ? "border-yellow-400"
-                  : "border-gray-700"
+              className={`h-16 sm:h-20 w-24 sm:w-28 object-cover rounded cursor-pointer border ${
+                currentImg === index ? "border-yellow-400" : "border-gray-700"
               }`}
             />
           ))}
@@ -93,7 +91,7 @@ const PropertyDetails = () => {
       </div>
 
       {/* 📋 DETAILS */}
-      <div className="bg-[#111] border border-gray-700 rounded p-6 space-y-3 max-w-4xl">
+      <div className="bg-[#111] border border-gray-700 rounded p-4 sm:p-6 space-y-3 max-w-4xl">
         <p>
           <span className="text-yellow-400 font-semibold">Property Type:</span>{" "}
           {property.type}
@@ -145,7 +143,7 @@ const PropertyDetails = () => {
           <h3 className="text-yellow-400 text-lg mb-3">Property Video</h3>
 
           <iframe
-            className="w-full h-64 md:h-80 rounded border border-gray-700"
+            className="w-full h-52 sm:h-64 md:h-80 rounded border border-gray-700"
             src={property.youtube.replace("watch?v=", "embed/")}
             allowFullScreen
             title="Property Video"
@@ -160,8 +158,8 @@ const PropertyDetails = () => {
         <iframe
           title="map"
           width="100%"
-          height="300"
-          className="rounded border border-gray-700"
+          height="280"
+          className="rounded border border-gray-700 w-full"
           loading="lazy"
           allowFullScreen
           src={`https://www.google.com/maps?q=${encodeURIComponent(
@@ -171,7 +169,7 @@ const PropertyDetails = () => {
       </div>
 
       {/* 📲 WHATSAPP + VISIT FORM */}
-      <div className="mt-10 flex flex-col md:flex-row gap-4">
+      <div className="mt-10 flex flex-col sm:flex-row gap-4 max-w-4xl">
         {/* WhatsApp */}
         <a
           href={`https://wa.me/918500662449?text=${encodeURIComponent(
@@ -179,7 +177,7 @@ const PropertyDetails = () => {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded font-semibold text-center"
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded font-semibold text-center w-full sm:w-auto"
         >
           Chat on WhatsApp
         </a>
@@ -187,7 +185,7 @@ const PropertyDetails = () => {
         {/* Request Visit Form */}
         <button
           onClick={() => setOpenVisit(true)}
-          className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded font-semibold"
+          className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded font-semibold w-full sm:w-auto"
         >
           Request Site Visit
         </button>
@@ -213,7 +211,7 @@ const PropertyDetails = () => {
             {/* CLOSE */}
             <button
               onClick={() => setOpenGallery(false)}
-              className="absolute top-6 right-6 text-white text-3xl z-50"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-3xl z-50"
             >
               ✕
             </button>
@@ -225,7 +223,7 @@ const PropertyDetails = () => {
                 navigation
                 pagination={{ clickable: true }}
                 modules={[Navigation, Pagination]}
-                className="h-[80vh]"
+                className="h-[70vh] sm:h-[80vh]"
               >
                 {images.map((img, i) => (
                   <SwiperSlide key={i}>
@@ -234,7 +232,7 @@ const PropertyDetails = () => {
                       initial={{ scale: 0.9, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      className="w-full h-[80vh] object-contain"
+                      className="w-full h-[70vh] sm:h-[80vh] object-contain"
                     />
                   </SwiperSlide>
                 ))}

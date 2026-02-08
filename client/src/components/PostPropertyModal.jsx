@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -11,6 +11,8 @@ const PostPropertyModal = ({ onClose }) => {
     price: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -20,43 +22,78 @@ const PostPropertyModal = ({ onClose }) => {
       return;
     }
 
-    await addDoc(collection(db, "sellRequests"), {
-      ...form,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      setLoading(true);
 
-    alert(
-      "Request submitted. Admin will contact you.\nFor faster approval, send photos via WhatsApp."
-    );
+      await addDoc(collection(db, "sellRequests"), {
+        ...form,
+        createdAt: serverTimestamp(),
+      });
 
-    onClose();
+      alert(
+        "Request submitted. Admin will contact you.\nFor faster approval, send photos via WhatsApp."
+      );
+
+      onClose();
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // 🔒 Lock background scroll + ESC close support
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.body.style.overflow = "auto";
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-[#111] p-6 rounded w-96">
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div
+        className="
+          bg-[#111] p-6 rounded-xl
+          w-full max-w-md sm:max-w-lg md:max-w-xl
+          max-h-[90vh] overflow-y-auto
+          pt-[env(safe-area-inset-top)]
+          pb-[env(safe-area-inset-bottom)]
+          shadow-2xl
+        "
+      >
         <h3 className="text-yellow-400 text-lg mb-4">
           Post Property Request
         </h3>
 
         <input
-          className="input mb-3"
+          className="input mb-3 w-full"
           name="ownerName"
           placeholder="Your Name"
           onChange={handleChange}
         />
 
         <input
-          className="input mb-3"
+          className="input mb-3 w-full"
           name="phone"
           placeholder="Phone Number"
           onChange={handleChange}
         />
 
         <select
-          className="input mb-3"
+          className="input mb-3 w-full"
           name="type"
           onChange={handleChange}
+          defaultValue="House"
         >
           <option>House</option>
           <option>Plot</option>
@@ -64,30 +101,31 @@ const PostPropertyModal = ({ onClose }) => {
         </select>
 
         <input
-          className="input mb-3"
+          className="input mb-3 w-full"
           name="location"
           placeholder="Location"
           onChange={handleChange}
         />
 
         <input
-          className="input mb-4"
+          className="input mb-4 w-full"
           name="price"
           placeholder="Expected Price"
           onChange={handleChange}
         />
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={submit}
-            className="bg-yellow-500 text-black px-4 py-2 rounded"
+            disabled={loading}
+            className="bg-yellow-500 text-black px-4 py-2 rounded flex-1 min-h-[44px] font-semibold hover:bg-yellow-400 transition disabled:opacity-60"
           >
-            Submit
+            {loading ? "Submitting..." : "Submit"}
           </button>
 
           <button
             onClick={onClose}
-            className="bg-gray-700 px-4 py-2 rounded"
+            className="bg-gray-700 px-4 py-2 rounded flex-1 min-h-[44px] hover:bg-gray-600 transition"
           >
             Cancel
           </button>

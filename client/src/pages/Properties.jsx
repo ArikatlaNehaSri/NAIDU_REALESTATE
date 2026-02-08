@@ -12,10 +12,14 @@ const Properties = () => {
   const [maxPrice, setMaxPrice] = useState("");
   const [location, setLocation] = useState("");
 
-  /* 🔥 LOAD FROM FIRESTORE */
+  /* 🔥 LOAD FROM FIRESTORE (SAFE FILTER ADDED) */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "properties"), (snap) => {
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      const data = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        // ✅ remove empty / broken documents (prevents black dummy card)
+        .filter((p) => p.title && p.price && p.location);
+
       setAllProperties(data);
       setFiltered(data);
     });
@@ -102,7 +106,8 @@ const Properties = () => {
       {filtered.length === 0 ? (
         <p className="text-gray-400">No matching properties found.</p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-3">
+        // ✅ responsive grid fix (removes empty column on laptop)
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p) => (
             <PropertyCard key={p.id} property={p} />
           ))}

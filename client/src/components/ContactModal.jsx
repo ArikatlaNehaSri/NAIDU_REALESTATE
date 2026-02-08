@@ -1,10 +1,44 @@
 import { FaPhoneAlt, FaWhatsapp, FaEnvelope, FaYoutube, FaInstagram } from "react-icons/fa";
+import { useEffect } from "react";
 
 const ContactModal = ({ onClose }) => {
-  return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
-      <div className="relative bg-[#111] w-full max-w-md p-6 rounded-xl border border-yellow-600 text-white shadow-2xl">
+  // prevent background scroll when modal open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
 
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleEsc);
+
+    return () => {
+      document.body.style.overflow = "auto";
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="
+        fixed inset-0 z-50
+        bg-black/70
+        flex items-center justify-center
+        p-4
+      "
+    >
+      <div
+        className="
+          relative bg-[#111]
+          w-full max-w-md
+          max-h-[90vh] overflow-y-auto
+          p-6 rounded-xl
+          border border-yellow-600
+          text-white shadow-2xl
+          pt-[env(safe-area-inset-top)]
+          pb-[env(safe-area-inset-bottom)]
+        "
+      >
         {/* CLOSE */}
         <button
           onClick={onClose}
@@ -21,10 +55,10 @@ const ContactModal = ({ onClose }) => {
 
           {/* PHONE */}
           <p className="flex items-center gap-3">
-            <FaPhoneAlt className="text-yellow-400" />
+            <FaPhoneAlt className="text-yellow-400 shrink-0" />
             <a
               href="tel:+918500662449"
-              className="text-yellow-400 underline hover:text-yellow-300 transition"
+              className="text-yellow-400 underline hover:text-yellow-300 transition break-all"
             >
               +91 8500662449
             </a>
@@ -32,12 +66,12 @@ const ContactModal = ({ onClose }) => {
 
           {/* WHATSAPP */}
           <p className="flex items-center gap-3">
-            <FaWhatsapp className="text-green-500" />
+            <FaWhatsapp className="text-green-500 shrink-0" />
             <a
               href="https://wa.me/918500662449"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-yellow-400 underline hover:text-yellow-300 transition"
+              className="text-yellow-400 underline hover:text-yellow-300 transition break-all"
             >
               Chat on WhatsApp
             </a>
@@ -45,10 +79,10 @@ const ContactModal = ({ onClose }) => {
 
           {/* EMAIL */}
           <p className="flex items-center gap-3">
-            <FaEnvelope className="text-yellow-400" />
+            <FaEnvelope className="text-yellow-400 shrink-0" />
             <a
               href="mailto:arikatlavenkateswarlu668@gmail.com"
-              className="text-yellow-400 underline hover:text-yellow-300 transition"
+              className="text-yellow-400 underline hover:text-yellow-300 transition break-all"
             >
               arikatlavenkateswarlu668@gmail.com
             </a>
@@ -61,7 +95,6 @@ const ContactModal = ({ onClose }) => {
             </p>
 
             <div className="flex justify-center gap-8 text-2xl">
-
               {/* YouTube */}
               <a
                 href="https://www.youtube.com/@arikatlavenkateswarlu668"
@@ -81,10 +114,8 @@ const ContactModal = ({ onClose }) => {
               >
                 <FaInstagram />
               </a>
-
             </div>
           </div>
-
         </div>
       </div>
     </div>
